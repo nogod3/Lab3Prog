@@ -1,0 +1,262 @@
+using System;
+
+public class SquareMatrix : ICloneable, IComparable<SquareMatrix>
+{
+    private int[,] matrix;
+    private int size;
+
+    public int Size => size;
+
+    public SquareMatrix(int size)
+    {
+        this.size = size;
+        matrix = new int[size, size];
+        Random rand = new Random();
+        for (int i = 0; i < size; i++)
+        {
+            for (int j = 0; j < size; j++)
+            {
+                matrix[i, j] = rand.Next(1, 10);
+            }
+        }
+    }
+
+    public SquareMatrix(int[,] matrix)
+    {
+        if (matrix.GetLength(0) != matrix.GetLength(1))
+            throw new MatrixSizeMismatchException("Матрица должна быть квадратной.");
+        this.size = matrix.GetLength(0);
+        this.matrix = matrix;
+    }
+
+    public static SquareMatrix operator +(SquareMatrix a, SquareMatrix b)
+    {
+        if (a.Size != b.Size)
+        {
+            throw new MatrixSizeMismatchException("Матрицы должны быть одного размера.");
+        }
+        int[,] result = new int[a.Size, a.Size];
+        for (int i = 0; i < a.Size; i++)
+        {
+            for (int j = 0; j < a.Size; j++)
+            {
+                result[i, j] = a.matrix[i, j] + b.matrix[i, j];
+            }
+        }
+        return new SquareMatrix(result);
+    }
+
+    public static SquareMatrix operator *(SquareMatrix a, SquareMatrix b)
+    {
+        if (a.Size != b.Size)
+            throw new MatrixSizeMismatchException("Матрицы должны быть одного размера.");
+
+        int[,] result = new int[a.Size, a.Size];
+        for (int i = 0; i < a.Size; i++)
+        {
+            for (int j = 0; j < a.Size; j++)
+            {
+                result[i, j] = 0;
+                for (int k = 0; k < a.Size; k++)
+                {
+                    result[i, j] += a.matrix[i, k] * b.matrix[k, j];
+                }
+            }
+        }
+        return new SquareMatrix(result);
+    }
+
+    public static bool operator >(SquareMatrix a, SquareMatrix b)
+    {
+        return a.Determinant() > b.Determinant();
+    }
+
+    public static bool operator <(SquareMatrix a, SquareMatrix b)
+    {
+        return a.Determinant() < b.Determinant();
+    }
+
+    public static bool operator ==(SquareMatrix a, SquareMatrix b)
+    {
+        return a.Equals(b);
+    }
+
+    public static bool operator !=(SquareMatrix a, SquareMatrix b)
+    {
+        return !a.Equals(b);
+    }
+
+    public static explicit operator int(SquareMatrix m)
+    {
+        return m.Determinant();
+    }
+
+    public static bool operator true(SquareMatrix m)
+    {
+        return m.Determinant() != 0;
+    }
+
+    public static bool operator false(SquareMatrix m)
+    {
+        return m.Determinant() == 0;
+    }
+
+    public int Determinant()
+    {
+        if (size == 1)
+            return matrix[0, 0];
+        if (size == 2)
+            return matrix[0, 0] * matrix[1, 1] - matrix[0, 1] * matrix[1, 0];
+
+        int det = 0;
+        for (int i = 0; i < size; i++)
+        {
+            det += (int)Math.Pow(-1, i) * matrix[0, i] * Minor(0, i).Determinant();
+        }
+        return det;
+    }
+
+    private SquareMatrix Minor(int row, int col)
+    {
+        int[,] minorMatrix = new int[size - 1, size - 1];
+        for (int i = 0, mi = 0; i < size; i++)
+        {
+            if (i == row) continue;
+            for (int j = 0, mj = 0; j < size; j++)
+            {
+                if (j == col) continue;
+                minorMatrix[mi, mj] = matrix[i, j];
+                mj++;
+            }
+            mi++;
+        }
+        return new SquareMatrix(minorMatrix);
+    }
+
+    public SquareMatrix Inverse()
+    {
+        int det = Determinant();
+        if (det == 0)
+            throw new MatrixNotInvertibleException("Матрица не обратима.");
+
+        int[,] inverseMatrix = new int[size, size];
+        for (int i = 0; i < size; i++)
+        {
+            for (int j = 0; j < size; j++)
+            {
+                inverseMatrix[i, j] = (int)Math.Pow(-1, i + j) * Minor(j, i).Determinant();
+            }
+        }
+
+        for (int i = 0; i < size; i++)
+        {
+            for (int j = 0; j < size; j++)
+            {
+                inverseMatrix[i, j] /= det;
+            }
+        }
+        return new SquareMatrix(inverseMatrix);
+    }
+
+    public object Clone()
+    {
+        int[,] copy = new int[size, size];
+        for (int i = 0; i < size; i++)
+        {
+            for (int j = 0; j < size; j++)
+            {
+                copy[i, j] = matrix[i, j];
+            }
+        }
+        return new SquareMatrix(copy);
+    }
+
+    public int CompareTo(SquareMatrix other)
+    {
+        return Determinant().CompareTo(other.Determinant());
+    }
+
+    public override bool Equals(object obj)
+    {
+        if (obj is SquareMatrix other)
+        {
+            if (this.size != other.size)
+                return false;
+
+            for (int i = 0; i < size; i++)
+            {
+                for (int j = 0; j < size; j++)
+                {
+                    if (this.matrix[i, j] != other.matrix[i, j])
+                        return false;
+                }
+            }
+            return true;
+        }
+        return false;
+    }
+
+    public override int GetHashCode()
+    {
+        return matrix.GetHashCode();
+    }
+
+    public override string ToString()
+    {
+        string result = "";
+        for (int i = 0; i < size; i++)
+        {
+            for (int j = 0; j < size; j++)
+            {
+                result += matrix[i, j] + " ";
+            }
+            result += "\n";
+        }
+        return result;
+    }
+}
+
+public class MatrixSizeMismatchException : Exception
+{
+    public MatrixSizeMismatchException(string message) : base(message) { }
+}
+
+public class MatrixNotInvertibleException : Exception
+{
+    public MatrixNotInvertibleException(string message) : base(message) { }
+}
+
+class Program
+{
+    static void Main(string[] args)
+    {
+        SquareMatrix matrix1 = new SquareMatrix(3);
+        SquareMatrix matrix2 = new SquareMatrix(3);
+
+        Console.WriteLine("Матрица 1:");
+        Console.WriteLine(matrix1);
+
+        Console.WriteLine("Матрица 2:");
+        Console.WriteLine(matrix2);
+
+        SquareMatrix sumMatrix = matrix1 + matrix2;
+        Console.WriteLine("Сумма матриц:");
+        Console.WriteLine(sumMatrix);
+
+        SquareMatrix productMatrix = matrix1 * matrix2;
+        Console.WriteLine("Произведение матриц:");
+        Console.WriteLine(productMatrix);
+
+        Console.WriteLine("Детерминант матрицы 1: " + matrix1.Determinant());
+        Console.WriteLine("Детерминант матрицы 2: " + matrix2.Determinant());
+
+        Console.WriteLine("Матрица 1 > Матрица 2: " + (matrix1 > matrix2));
+        Console.WriteLine("Матрица 1 < Матрица 2: " + (matrix1 < matrix2));
+
+        SquareMatrix clonedMatrix = (SquareMatrix)matrix1.Clone();
+        Console.WriteLine("Клонированная матрица 1:");
+        Console.WriteLine(clonedMatrix);
+
+        Console.WriteLine("Матрица 1 == Клонированная матрица: " + (matrix1 == clonedMatrix));
+    }
+}
