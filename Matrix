@@ -152,60 +152,63 @@ public int Determinant()
     return determinant;
 }
 
-    private SquareMatrix Minor(int row, int col)
+    private SquareMatrix GetMinor(int rowToRemove, int columnToRemove)
+{
+    int[,] minorMatrix = new int[_dimension - 1, _dimension - 1];
+    for (int rowIndex = 0, minorRowIndex = 0; rowIndex < _dimension; rowIndex++)
     {
-        int[,] minorMatrix = new int[size - 1, size - 1];
-        for (int i = 0, mi = 0; i < size; i++)
+        if (rowIndex == rowToRemove) continue;
+        for (int columnIndex = 0, minorColumnIndex = 0; columnIndex < _dimension; columnIndex++)
         {
-            if (i == row) continue;
-            for (int j = 0, mj = 0; j < size; j++)
-            {
-                if (j == col) continue;
-                minorMatrix[mi, mj] = matrix[i, j];
-                mj++;
-            }
-            mi++;
+            if (columnIndex == columnToRemove) continue;
+            minorMatrix[minorRowIndex, minorColumnIndex] = _matrix[rowIndex, columnIndex];
+            minorColumnIndex++;
         }
-        return new SquareMatrix(minorMatrix);
+        minorRowIndex++;
     }
+    return new SquareMatrix(minorMatrix);
+}
 
     public SquareMatrix Inverse()
     {
-        int det = Determinant();
-        if (det == 0)
-            throw new MatrixNotInvertibleException("Матрица не обратима.");
-
-        int[,] inverseMatrix = new int[size, size];
-        for (int i = 0; i < size; i++)
-        {
-            for (int j = 0; j < size; j++)
-            {
-                inverseMatrix[i, j] = (int)Math.Pow(-1, i + j) * Minor(j, i).Determinant();
-            }
-        }
-
-        for (int i = 0; i < size; i++)
-        {
-            for (int j = 0; j < size; j++)
-            {
-                inverseMatrix[i, j] /= det;
-            }
-        }
-        return new SquareMatrix(inverseMatrix);
+            int determinant = Determinant();
+    if (determinant == 0)
+    {
+        Console.Error.WriteLine("Матрица не обратима.");
+        return new SquareMatrix(0); 
     }
+
+    int[,] inverseMatrix = new int[_dimension, _dimension];
+    for (int rowIndex = 0; rowIndex < _dimension; rowIndex++)
+    {
+        for (int columnIndex = 0; columnIndex < _dimension; columnIndex++)
+        {
+            inverseMatrix[rowIndex, columnIndex] = (int)Math.Pow(-1, rowIndex + columnIndex) * GetMinor(columnIndex, rowIndex).Determinant();
+        }
+    }
+
+    for (int rowIndex = 0; rowIndex < _dimension; rowIndex++)
+    {
+        for (int columnIndex = 0; columnIndex < _dimension; columnIndex++)
+        {
+            inverseMatrix[rowIndex, columnIndex] /= determinant;
+        }
+    }
+    return new SquareMatrix(inverseMatrix);
+}
 
     public object Clone()
     {
-        int[,] copy = new int[size, size];
-        for (int i = 0; i < size; i++)
+            int[,] copy = new int[_dimension, _dimension];
+    for (int rowIndex = 0; rowIndex < _dimension; rowIndex++)
+    {
+        for (int columnIndex = 0; columnIndex < _dimension; columnIndex++)
         {
-            for (int j = 0; j < size; j++)
-            {
-                copy[i, j] = matrix[i, j];
-            }
+            copy[rowIndex, columnIndex] = _matrix[rowIndex, columnIndex];
         }
-        return new SquareMatrix(copy);
     }
+    return new SquareMatrix(copy);
+}
 
     public int CompareTo(SquareMatrix other)
     {
@@ -216,21 +219,21 @@ public int Determinant()
     {
         if (obj is SquareMatrix other)
         {
-            if (this.size != other.size)
-                return false;
+              if (_dimension != other._dimension)
+            return false;
 
-            for (int i = 0; i < size; i++)
+        for (int rowIndex = 0; rowIndex < _dimension; rowIndex++)
+        {
+            for (int columnIndex = 0; columnIndex < _dimension; columnIndex++)
             {
-                for (int j = 0; j < size; j++)
-                {
-                    if (this.matrix[i, j] != other.matrix[i, j])
-                        return false;
-                }
+                if (_matrix[rowIndex, columnIndex] != other._matrix[rowIndex, columnIndex])
+                    return false;
             }
-            return true;
         }
-        return false;
+        return true;
     }
+    return false;
+}
 
     public override int GetHashCode()
     {
@@ -240,11 +243,11 @@ public int Determinant()
     public override string ToString()
     {
         string result = "";
-        for (int i = 0; i < size; i++)
+        for (int rowIndex = 0; rowIndex < _dimension; rowIndex++)
         {
-            for (int j = 0; j < size; j++)
+            for (int columnIndex = 0; columnIndex < _dimension; columnIndex++)
             {
-                result += matrix[i, j] + " ";
+                result += _matrix[rowIndex, columnIndex] + " ";
             }
             result += "\n";
         }
@@ -252,20 +255,12 @@ public int Determinant()
     }
 }
 
-public class MatrixSizeMismatchException : Exception
-{
-    public MatrixSizeMismatchException(string message) : base(message) { }
-}
-
-public class MatrixNotInvertibleException : Exception
-{
-    public MatrixNotInvertibleException(string message) : base(message) { }
-}
-
 class Program
 {
     static void Main(string[] args)
     {
+        Console.WriteLine("Демонстрация работы матричного калькулятора:");
+
         SquareMatrix matrix1 = new SquareMatrix(3);
         SquareMatrix matrix2 = new SquareMatrix(3);
 
