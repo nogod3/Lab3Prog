@@ -1,25 +1,42 @@
 using System;
 
+public class MatrixSizeMismatchException : Exception
+{
+    public MatrixSizeMismatchException(string message) : base(message) { }
+}
+
+public class MatrixNotInvertibleException : Exception
+{
+    public MatrixNotInvertibleException(string message) : base(message) { }
+}
+
 public class SquareMatrix : ICloneable, IComparable<SquareMatrix>
 {
-    private int[,] matrix;
-    private int size;
+    private int[,] _matrix;
+    private int _dimension; 
 
-    public int Size => size;
+    public int Dimension => _dimension; // исправил размер на размерность 
 
-    public SquareMatrix(int size)
+   public SquareMatrix(int dimension)
+{
+    if (dimension <= 0)
     {
-        this.size = size;
-        matrix = new int[size, size];
-        Random rand = new Random();
-        for (int i = 0; i < size; i++)
+        Console.Error.WriteLine("Размерность матрицы должна быть положительным числом.");
+        return;
+    }
+
+    _dimension = dimension;
+    _matrix = new int[dimension, dimension];
+    Random random = new Random();
+
+    for (int rowIndex = 0; rowIndex < dimension; rowIndex++) // исправил здесь i на rowIndex
+    {
+        for (int columnIndex = 0; columnIndex < dimension; columnIndex++) // исправил здесь j на columnIndex
         {
-            for (int j = 0; j < size; j++)
-            {
-                matrix[i, j] = rand.Next(1, 10);
-            }
+            _matrix[rowIndex, columnIndex] = random.Next(1, 10);
         }
     }
+}
 
     public SquareMatrix(int[,] matrix)
     {
