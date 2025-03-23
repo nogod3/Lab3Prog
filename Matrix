@@ -39,12 +39,21 @@ public class SquareMatrix : ICloneable, IComparable<SquareMatrix>
 }
 
     public SquareMatrix(int[,] matrix)
+{
+    //заменил GetLength на GetUpperBound 
+    int rows = matrix.GetUpperBound(0) + 1; 
+    int columns = matrix.GetUpperBound(1) + 1; 
+
+    if (rows != columns)
     {
-        if (matrix.GetLength(0) != matrix.GetLength(1))
-            throw new MatrixSizeMismatchException("Матрица должна быть квадратной.");
-        this.size = matrix.GetLength(0);
-        this.matrix = matrix;
+        //заменил throw на вывод ошибки
+        Console.Error.WriteLine("Матрица должна быть квадратной.");
+        return;
     }
+
+    _dimension = rows;
+    _matrix = matrix;
+}
 
     public static SquareMatrix operator +(SquareMatrix a, SquareMatrix b)
     {
