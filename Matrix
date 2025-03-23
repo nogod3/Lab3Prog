@@ -40,98 +40,117 @@ public class SquareMatrix : ICloneable, IComparable<SquareMatrix>
 
     public SquareMatrix(int[,] matrix)
     {
-        if (matrix.GetLength(0) != matrix.GetLength(1))
-            throw new MatrixSizeMismatchException("Матрица должна быть квадратной.");
-        this.size = matrix.GetLength(0);
-        this.matrix = matrix;
+            //заменил GetLength на GetUpperBound 
+    int rows = matrix.GetUpperBound(0) + 1; 
+    int columns = matrix.GetUpperBound(1) + 1; 
+
+    if (rows != columns)
+    {
+        //заменил throw на вывод ошибки
+        Console.Error.WriteLine("Матрица должна быть квадратной.");
+        return;
     }
+
+    _dimension = rows;
+    _matrix = matrix;
+}        
 
     public static SquareMatrix operator +(SquareMatrix a, SquareMatrix b)
     {
-        if (a.Size != b.Size)
-        {
-            throw new MatrixSizeMismatchException("Матрицы должны быть одного размера.");
-        }
-        int[,] result = new int[a.Size, a.Size];
-        for (int i = 0; i < a.Size; i++)
-        {
-            for (int j = 0; j < a.Size; j++)
-            {
-                result[i, j] = a.matrix[i, j] + b.matrix[i, j];
-            }
-        }
-        return new SquareMatrix(result);
+            if (firstMatrix.Dimension != secondMatrix.Dimension)
+    {
+        //заменил throw на вывод ошибки и добавил возврат пустой матрицы при оишбке
+        Console.Error.WriteLine("Матрицы должны быть одного размера.");
+        return new SquareMatrix(0); 
     }
+
+    int[,] resultMatrix = new int[firstMatrix.Dimension, firstMatrix.Dimension];
+
+    for (int rowIndex = 0; rowIndex < firstMatrix.Dimension; rowIndex++)
+    {
+        for (int columnIndex = 0; columnIndex < firstMatrix.Dimension; columnIndex++)
+        {
+            resultMatrix[rowIndex, columnIndex] = firstMatrix._matrix[rowIndex, columnIndex] + secondMatrix._matrix[rowIndex, columnIndex];
+        }
+    }
+
+    return new SquareMatrix(resultMatrix);
+}
 
     public static SquareMatrix operator *(SquareMatrix a, SquareMatrix b)
     {
-        if (a.Size != b.Size)
-            throw new MatrixSizeMismatchException("Матрицы должны быть одного размера.");
+            if (firstMatrix.Dimension != secondMatrix.Dimension)
+    {
+        Console.Error.WriteLine("Матрицы должны быть одного размера.");
+        return new SquareMatrix(0);  
+    }
 
-        int[,] result = new int[a.Size, a.Size];
-        for (int i = 0; i < a.Size; i++)
+    int[,] resultMatrix = new int[firstMatrix.Dimension, firstMatrix.Dimension];
+
+    for (int rowIndex = 0; rowIndex < firstMatrix.Dimension; rowIndex++)
+    {
+        for (int columnIndex = 0; columnIndex < firstMatrix.Dimension; columnIndex++)
         {
-            for (int j = 0; j < a.Size; j++)
+            resultMatrix[rowIndex, columnIndex] = 0;
+            for (int innerIndex = 0; innerIndex < firstMatrix.Dimension; innerIndex++) 
             {
-                result[i, j] = 0;
-                for (int k = 0; k < a.Size; k++)
-                {
-                    result[i, j] += a.matrix[i, k] * b.matrix[k, j];
-                }
+                resultMatrix[rowIndex, columnIndex] += firstMatrix._matrix[rowIndex, innerIndex] * secondMatrix._matrix[innerIndex, columnIndex];
             }
         }
-        return new SquareMatrix(result);
     }
 
-    public static bool operator >(SquareMatrix a, SquareMatrix b)
+    return new SquareMatrix(resultMatrix);
+}
+
+    public static bool operator >(SquareMatrix firstMatrix, SquareMatrix secondMatrix)
+{
+    return firstMatrix.Determinant() > secondMatrix.Determinant();
+}
+
+public static bool operator <(SquareMatrix firstMatrix, SquareMatrix secondMatrix)
+{
+    return firstMatrix.Determinant() < secondMatrix.Determinant();
+}
+
+public static bool operator ==(SquareMatrix firstMatrix, SquareMatrix secondMatrix)
+{
+    return firstMatrix.Equals(secondMatrix);
+}
+
+public static bool operator !=(SquareMatrix firstMatrix, SquareMatrix secondMatrix)
+{
+    return !firstMatrix.Equals(secondMatrix);
+}
+
+public static explicit operator int(SquareMatrix matrix)
+{
+    return matrix.Determinant();
+}
+
+public static bool operator true(SquareMatrix matrix)
+{
+    return matrix.Determinant() != 0;
+}
+
+public static bool operator false(SquareMatrix matrix)
+{
+    return matrix.Determinant() == 0;
+}
+
+public int Determinant()
+{
+    if (_dimension == 1)
+        return _matrix[0, 0];
+    if (_dimension == 2)
+        return _matrix[0, 0] * _matrix[1, 1] - _matrix[0, 1] * _matrix[1, 0];
+
+    int determinant = 0;
+    for (int columnIndex = 0; columnIndex < _dimension; columnIndex++) 
     {
-        return a.Determinant() > b.Determinant();
+        determinant += (int)Math.Pow(-1, columnIndex) * _matrix[0, columnIndex] * GetMinor(0, columnIndex).Determinant();
     }
-
-    public static bool operator <(SquareMatrix a, SquareMatrix b)
-    {
-        return a.Determinant() < b.Determinant();
-    }
-
-    public static bool operator ==(SquareMatrix a, SquareMatrix b)
-    {
-        return a.Equals(b);
-    }
-
-    public static bool operator !=(SquareMatrix a, SquareMatrix b)
-    {
-        return !a.Equals(b);
-    }
-
-    public static explicit operator int(SquareMatrix m)
-    {
-        return m.Determinant();
-    }
-
-    public static bool operator true(SquareMatrix m)
-    {
-        return m.Determinant() != 0;
-    }
-
-    public static bool operator false(SquareMatrix m)
-    {
-        return m.Determinant() == 0;
-    }
-
-    public int Determinant()
-    {
-        if (size == 1)
-            return matrix[0, 0];
-        if (size == 2)
-            return matrix[0, 0] * matrix[1, 1] - matrix[0, 1] * matrix[1, 0];
-
-        int det = 0;
-        for (int i = 0; i < size; i++)
-        {
-            det += (int)Math.Pow(-1, i) * matrix[0, i] * Minor(0, i).Determinant();
-        }
-        return det;
-    }
+    return determinant;
+}
 
     private SquareMatrix Minor(int row, int col)
     {
